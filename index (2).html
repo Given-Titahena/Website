@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="GPID-EXPRESS - platform pangan yang menghubungkan pelanggan dengan penjual terpercaya." />
+  <title>GPID-EXPRESS - Solusi Pangan Terpercaya</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: #f8fafc; color: #1f2937; }
+    .section { display: none; }
+    .section.active { display: block; }
+    .floating-nav { position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,.96); backdrop-filter: blur(12px); }
+    .nav-link { position: relative; transition: color .2s ease; }
+    .nav-link.active, .nav-link:hover { color: #2563eb; }
+    .hero-banner { min-height: 66vh; background: linear-gradient(120deg,rgba(15,23,42,.78),rgba(30,64,175,.45)), url('https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1800&q=85') center/cover; }
+    .card-hover { transition: transform .2s ease, box-shadow .2s ease; }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 16px 35px rgba(15,23,42,.10); }
+    .product-card { overflow: hidden; background: white; border-radius: 16px; box-shadow: 0 5px 18px rgba(15,23,42,.08); }
+    .seller-badge { display: inline-block; border-radius: 999px; padding: 4px 10px; background: #dcfce7; color: #166534; font-size: 11px; font-weight: 700; }
+    .contact-form { background: linear-gradient(135deg,#f5f7fa 0%,#dbeafe 100%); border-radius: 20px; padding: 28px; }
+    .modal-backdrop { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(15,23,42,.62); }
+    .modal-panel { width: min(680px,100%); max-height: 90vh; overflow: auto; background: #fff; border-radius: 18px; box-shadow: 0 24px 70px rgba(0,0,0,.25); }
+    .toast { position: fixed; right: 18px; bottom: 18px; z-index: 150; max-width: min(420px,calc(100vw - 36px)); padding: 13px 17px; border-radius: 12px; color: #fff; background: #111827; box-shadow: 0 10px 30px rgba(0,0,0,.2); }
+    .toast.error { background: #991b1b; }
+    .toast.success { background: #166534; }
+    .form-control { width: 100%; border: 1px solid #cbd5e1; border-radius: 10px; padding: 11px 13px; background: #fff; outline: none; }
+    .form-control:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.14); }
+    .btn-primary { border-radius: 10px; padding: 11px 17px; color: #fff; font-weight: 700; background: linear-gradient(90deg,#3b82f6,#7c3aed); }
+    .btn-primary:hover { opacity: .92; }
+    .btn-muted { border-radius: 10px; padding: 10px 14px; background: #e5e7eb; color: #374151; font-weight: 600; }
+    .table-wrap { overflow-x: auto; }
+    .admin-table { width: 100%; border-collapse: collapse; min-width: 620px; }
+    .admin-table th,.admin-table td { border-bottom: 1px solid #e5e7eb; padding: 11px 10px; text-align: left; font-size: 13px; vertical-align: middle; }
+    .admin-table th { color: #475569; background: #f8fafc; }
+    .status-pill { display: inline-block; padding: 4px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; background: #e2e8f0; color: #334155; }
+    .status-pending,.status-baru { background: #fef3c7; color: #92400e; }
+    .status-approved,.status-selesai { background: #dcfce7; color: #166534; }
+    .status-rejected,.status-dibatalkan { background: #fee2e2; color: #991b1b; }
+    .status-diproses,.status-dikirim { background: #dbeafe; color: #1e40af; }
+    @media(max-width:768px) { .desktop-menu { display:none; } .mobile-menu { display:inline-flex; } .hero-banner { min-height: 58vh; } }
+    @media(min-width:769px) { .mobile-menu { display:none; } }
+  </style>
+</head>
+<body>
+  <nav class="floating-nav shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 py-3">
+      <div class="flex items-center justify-between gap-4">
+        <button class="flex items-center gap-3" data-action="navigate" data-section="home" aria-label="GPID-EXPRESS beranda">
+          <span class="w-10 h-10 rounded-xl flex items-center justify-center text-white bg-gradient-to-r from-blue-500 to-purple-600"><i class="fas fa-truck-fast"></i></span>
+          <span class="text-xl md:text-2xl font-extrabold text-slate-800">GPID-EXPRESS</span>
+        </button>
+        <div class="desktop-menu flex items-center gap-7">
+          <button class="nav-link active font-semibold" data-action="navigate" data-section="home">Beranda</button>
+          <button class="nav-link font-semibold" data-action="navigate" data-section="products">Produk</button>
+          <button class="nav-link font-semibold" data-action="navigate" data-section="sellers">Penjual</button>
+          <button class="nav-link font-semibold" data-action="navigate" data-section="contact">Kontak</button>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="relative rounded-xl px-3 py-2 text-slate-700 hover:bg-blue-50" data-action="open-cart" aria-label="Buka keranjang"><i class="fas fa-shopping-cart"></i><span id="cart-count" class="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-red-600 text-white text-xs flex items-center justify-center">0</span></button>
+          <button class="hidden sm:inline-flex rounded-xl px-3 py-2 text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100" data-action="open-admin"><i class="fas fa-user-shield mr-2"></i>Admin</button>
+          <button class="mobile-menu rounded-lg p-2 text-slate-700" data-action="toggle-mobile" aria-label="Buka menu"><i class="fas fa-bars text-xl"></i></button>
+        </div>
+      </div>
+      <div id="mobile-menu-dropdown" class="hidden md:hidden pt-3 pb-1 border-t mt-3">
+        <div class="grid grid-cols-2 gap-2">
+          <button class="text-left p-2 rounded-lg hover:bg-blue-50" data-action="navigate" data-section="home">Beranda</button>
+          <button class="text-left p-2 rounded-lg hover:bg-blue-50" data-action="navigate" data-section="products">Produk</button>
+          <button class="text-left p-2 rounded-lg hover:bg-blue-50" data-action="navigate" data-section="sellers">Penjual</button>
+          <button class="text-left p-2 rounded-lg hover:bg-blue-50" data-action="navigate" data-section="contact">Kontak</button>
+          <button class="text-left p-2 rounded-lg hover:bg-blue-50 sm:hidden" data-action="open-admin">Admin</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div id="mode-notice" class="hidden bg-amber-50 border-b border-amber-200 text-amber-900 text-sm px-4 py-2 text-center">Mode pratinjau: Firebase belum dikonfigurasi. Data pada mode ini hanya tersimpan di browser perangkat ini.</div>
+
+  <main>
+    <section id="home" class="section active">
+      <div class="hero-banner flex items-center justify-center text-center text-white px-5">
+        <div class="max-w-4xl py-16">
+          <p class="uppercase tracking-[.25em] text-sm font-bold text-blue-200 mb-4">Belanja pangan lebih mudah</p>
+          <h1 class="text-5xl md:text-7xl font-extrabold mb-6">GPID-EXPRESS</h1>
+          <p class="text-xl md:text-2xl mb-9">Solusi Pangan Terpercaya untuk Kebutuhan Pokok Anda</p>
+          <button class="btn-primary px-8 py-4 text-lg" data-action="navigate" data-section="products">Mulai Belanja <i class="fas fa-arrow-right ml-2"></i></button>
+        </div>
+      </div>
+      <div class="bg-white py-10 md:py-14">
+        <div class="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          <div><div class="text-3xl font-extrabold text-blue-600" id="stat-products">0</div><p class="text-slate-500 mt-1">Produk Tersedia</p></div>
+          <div><div class="text-3xl font-extrabold text-blue-600" id="stat-sellers">0</div><p class="text-slate-500 mt-1">Penjual Terverifikasi</p></div>
+          <div><div class="text-3xl font-extrabold text-blue-600">4</div><p class="text-slate-500 mt-1">Kategori Pangan</p></div>
+          <div><div class="text-3xl font-extrabold text-blue-600">24/7</div><p class="text-slate-500 mt-1">Akses Platform</p></div>
+        </div>
+      </div>
+      <div class="py-16 bg-slate-100">
+        <div class="max-w-7xl mx-auto px-4">
+          <h2 class="text-3xl md:text-4xl font-extrabold text-center mb-10">Layanan Kami</h2>
+          <div class="grid md:grid-cols-3 gap-7">
+            <div class="card-hover bg-white p-8 rounded-2xl text-center"><div class="w-16 h-16 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fas fa-truck-fast"></i></div><h3 class="text-xl font-bold mb-3">Pengiriman Cepat</h3><p class="text-slate-600">Pemesanan pangan dalam satu platform dengan informasi pesanan yang lebih tertata.</p></div>
+            <div class="card-hover bg-white p-8 rounded-2xl text-center"><div class="w-16 h-16 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fas fa-shield-halved"></i></div><h3 class="text-xl font-bold mb-3">Penjual Terdaftar</h3><p class="text-slate-600">Informasi penjual ditampilkan setelah melalui proses pemeriksaan admin.</p></div>
+            <div class="card-hover bg-white p-8 rounded-2xl text-center"><div class="w-16 h-16 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fas fa-clipboard-list"></i></div><h3 class="text-xl font-bold mb-3">Status Pesanan</h3><p class="text-slate-600">Pesanan tercatat sehingga admin dapat memantau dan memperbarui statusnya.</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 grid md:grid-cols-2 gap-10 items-center">
+          <div><h2 class="text-3xl font-extrabold mb-5">Tentang GPID-EXPRESS</h2><p class="text-slate-600 leading-relaxed mb-4">GPID-EXPRESS merupakan platform yang dirancang untuk menghubungkan pembeli dengan penjual produk pangan dan kebutuhan pokok.</p><p class="text-slate-600 leading-relaxed mb-7">Melalui katalog produk, keranjang belanja, pendaftaran penjual, dan pengelolaan pesanan, proses transaksi dapat dilakukan dengan lebih terstruktur.</p><button class="btn-primary" data-action="navigate" data-section="contact">Hubungi Kami</button></div>
+          <img class="w-full rounded-2xl shadow-lg" src="https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1000&q=80" alt="Tim bekerja bersama di kantor" />
+        </div>
+      </div>
+    </section>
+
+    <section id="products" class="section pt-12 pb-16">
+      <div class="max-w-7xl mx-auto px-4">
+        <h1 class="text-4xl font-extrabold text-center mb-3">Produk Kami</h1>
+        <p class="text-lg text-slate-600 text-center mb-8">Temukan produk pangan dari penjual yang terdaftar.</p>
+        <div class="max-w-xl mx-auto mb-7"><label for="product-search" class="sr-only">Cari produk</label><div class="relative"><i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i><input id="product-search" class="form-control pl-11" type="search" placeholder="Cari beras, daging, sayuran, buah..." /></div></div>
+        <div class="mb-8 flex flex-wrap justify-center gap-3">
+          <button class="filter-btn bg-blue-600 text-white px-5 py-2 rounded-full" data-category="all">Semua Produk</button>
+          <button class="filter-btn bg-slate-200 text-slate-700 px-5 py-2 rounded-full" data-category="bahan">Makanan Pokok</button>
+          <button class="filter-btn bg-slate-200 text-slate-700 px-5 py-2 rounded-full" data-category="daging">Daging</button>
+          <button class="filter-btn bg-slate-200 text-slate-700 px-5 py-2 rounded-full" data-category="sayur">Sayur-sayuran</button>
+          <button class="filter-btn bg-slate-200 text-slate-700 px-5 py-2 rounded-full" data-category="buah">Buah-buahan</button>
+        </div>
+        <div id="products-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+        <p id="products-empty" class="hidden text-center text-slate-500 bg-white rounded-xl p-10">Belum ada produk untuk ditampilkan. Silakan kembali lagi nanti.</p>
+      </div>
+    </section>
+
+    <section id="sellers" class="section pt-12 pb-16">
+      <div class="max-w-7xl mx-auto px-4">
+        <h1 class="text-4xl font-extrabold text-center mb-3">Penjual Terpercaya</h1>
+        <p class="text-lg text-slate-600 text-center mb-10">Temukan penjual pangan yang telah disetujui admin.</p>
+        <div class="grid md:grid-cols-3 gap-6 mb-12 text-center">
+          <div class="bg-white p-7 rounded-2xl shadow-sm"><div id="seller-stat-active" class="text-3xl font-extrabold text-blue-600">0</div><p class="text-slate-500">Penjual Aktif</p></div>
+          <div class="bg-white p-7 rounded-2xl shadow-sm"><div class="text-3xl font-extrabold text-green-600">Admin</div><p class="text-slate-500">Pemeriksaan Pendaftaran</p></div>
+          <div class="bg-white p-7 rounded-2xl shadow-sm"><div class="text-3xl font-extrabold text-purple-600">Online</div><p class="text-slate-500">Pendaftaran Penjual</p></div>
+        </div>
+        <div id="sellers-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        <div id="sellers-empty" class="hidden text-center text-slate-500 bg-white rounded-xl p-10">Belum ada penjual yang disetujui. Anda dapat mengajukan pendaftaran melalui tombol di bawah.</div>
+        <div class="mt-14 text-center bg-gradient-to-r from-blue-600 to-purple-600 text-white p-10 md:p-12 rounded-2xl">
+          <h2 class="text-3xl font-extrabold mb-3">Ingin Menjadi Penjual?</h2><p class="text-lg mb-7">Daftarkan usaha Anda agar dapat ditinjau oleh admin GPID-EXPRESS.</p>
+          <button class="bg-white text-blue-700 px-7 py-3 rounded-xl font-bold hover:bg-blue-50" data-action="open-seller-form">Daftar Sebagai Penjual</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact" class="section pt-12 pb-16">
+      <div class="max-w-7xl mx-auto px-4">
+        <h1 class="text-4xl font-extrabold text-center mb-3">Hubungi Kami</h1><p class="text-lg text-slate-600 text-center mb-12">Kirim pertanyaan atau pesan kepada tim GPID-EXPRESS.</p>
+        <div class="grid lg:grid-cols-2 gap-10">
+          <div>
+            <h2 class="text-2xl font-bold mb-6">Informasi Kontak</h2>
+            <div class="space-y-6">
+              <div class="flex gap-4 items-start"><span class="w-11 h-11 shrink-0 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fas fa-map-marker-alt"></i></span><div><h3 class="font-bold">Alamat</h3><p class="text-slate-600">Jl. CHR Soplanit, Desa Rumah Tiga, Kec. Rumah Tiga, Kota Ambon, Maluku</p></div></div>
+              <div class="flex gap-4 items-start"><span class="w-11 h-11 shrink-0 rounded-full bg-green-100 text-green-600 flex items-center justify-center"><i class="fas fa-phone"></i></span><div><h3 class="font-bold">Telepon</h3><a class="text-blue-700 hover:underline" href="tel:+6282236491200">+62 822 3649 1200</a></div></div>
+              <div class="flex gap-4 items-start"><span class="w-11 h-11 shrink-0 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center"><i class="fas fa-globe"></i></span><div><h3 class="font-bold">Website</h3><p class="text-slate-600">GPID-EXPRESS</p></div></div>
+              <div class="flex gap-4 items-start"><span class="w-11 h-11 shrink-0 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center"><i class="fas fa-clock"></i></span><div><h3 class="font-bold">Jam Operasional</h3><p class="text-slate-600">Informasi layanan melalui formulir kontak.</p></div></div>
+            </div>
+          </div>
+          <div class="contact-form">
+            <h2 class="text-2xl font-bold mb-6">Kirim Pesan</h2>
+            <form id="contact-form" class="space-y-4">
+              <div><label class="block font-semibold mb-1" for="contact-name">Nama Lengkap</label><input id="contact-name" name="name" class="form-control" required maxlength="100" /></div>
+              <div><label class="block font-semibold mb-1" for="contact-email">Email</label><input id="contact-email" name="email" type="email" class="form-control" required maxlength="150" /></div>
+              <div><label class="block font-semibold mb-1" for="contact-phone">Nomor Telepon</label><input id="contact-phone" name="phone" type="tel" class="form-control" maxlength="30" /></div>
+              <div><label class="block font-semibold mb-1" for="contact-subject">Subjek</label><select id="contact-subject" name="subject" class="form-control"><option>Pertanyaan Umum</option><option>Produk dan Pesanan</option><option>Registrasi Penjual</option><option>Keluhan</option><option>Kerja Sama Bisnis</option></select></div>
+              <div><label class="block font-semibold mb-1" for="contact-message">Pesan</label><textarea id="contact-message" name="message" rows="5" class="form-control" required maxlength="2000"></textarea></div>
+              <button class="btn-primary w-full" type="submit"><span class="submit-text">Kirim Pesan</span></button>
+            </form>
+          </div>
+        </div>
+        <div class="mt-14 rounded-2xl overflow-hidden"><iframe title="Peta wilayah Rumah Tiga, Ambon" src="https://www.openstreetmap.org/export/embed.html?bbox=128.15%2C-3.72%2C128.22%2C-3.65&layer=mapnik" class="w-full h-72 border-0" loading="lazy"></iframe></div>
+      </div>
+    </section>
+
+    <section id="admin" class="section pt-10 pb-16">
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-7"><div><p class="text-sm font-bold uppercase tracking-wider text-blue-600">Panel pengelolaan</p><h1 class="text-3xl font-extrabold">Dashboard Admin</h1><p id="admin-email" class="text-sm text-slate-500 mt-1"></p></div><div class="flex gap-2"><button class="btn-muted" data-action="admin-refresh"><i class="fas fa-rotate mr-2"></i>Refresh</button><button class="btn-muted" data-action="admin-logout"><i class="fas fa-right-from-bracket mr-2"></i>Keluar</button></div></div>
+        <div id="admin-panel" class="bg-white rounded-2xl shadow-sm p-5 md:p-7"><p class="text-slate-500">Memuat dashboard...</p></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bg-slate-900 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-9">
+        <div><div class="flex items-center gap-3 mb-4"><span class="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600"><i class="fas fa-truck-fast"></i></span><span class="text-xl font-extrabold">GPID-EXPRESS</span></div><p class="text-slate-400 leading-relaxed">Solusi pangan terpercaya untuk kebutuhan Anda melalui platform yang mudah digunakan.</p></div>
+        <div><h3 class="font-bold text-lg mb-4">Layanan</h3><ul class="space-y-2 text-slate-400"><li><button data-action="navigate" data-section="products" class="hover:text-white">Katalog Produk</button></li><li><button data-action="open-cart" class="hover:text-white">Keranjang Belanja</button></li><li><button data-action="navigate" data-section="sellers" class="hover:text-white">Daftar Penjual</button></li><li><button data-action="navigate" data-section="contact" class="hover:text-white">Bantuan</button></li></ul></div>
+        <div><h3 class="font-bold text-lg mb-4">Perusahaan</h3><ul class="space-y-2 text-slate-400"><li><button data-action="navigate" data-section="home" class="hover:text-white">Tentang Kami</button></li><li><button data-action="navigate" data-section="contact" class="hover:text-white">Kerja Sama</button></li><li><button data-action="open-info" data-info="privacy" class="hover:text-white">Kebijakan Privasi</button></li><li><button data-action="open-info" data-info="terms" class="hover:text-white">Syarat dan Ketentuan</button></li></ul></div>
+        <div><h3 class="font-bold text-lg mb-4">Hubungi Kami</h3><p class="text-slate-400 mb-3">+62 822 3649 1200</p><button data-action="navigate" data-section="contact" class="text-blue-300 hover:text-white">Kirim pesan kepada kami</button><div class="flex gap-3 mt-5"><button class="w-9 h-9 rounded-full bg-slate-700 hover:bg-blue-600" data-action="social-info" aria-label="Facebook"><i class="fab fa-facebook-f"></i></button><button class="w-9 h-9 rounded-full bg-slate-700 hover:bg-blue-600" data-action="social-info" aria-label="Instagram"><i class="fab fa-instagram"></i></button><button class="w-9 h-9 rounded-full bg-slate-700 hover:bg-blue-600" data-action="social-info" aria-label="YouTube"><i class="fab fa-youtube"></i></button></div></div>
+      </div>
+      <div class="border-t border-slate-700 mt-9 pt-7 text-center text-slate-500 text-sm">© <span id="current-year">2026</span> GPID-EXPRESS. Semua hak dilindungi.</div>
+    </div>
+  </footer>
+
+  <div id="modal-root"></div>
+  <div id="toast-root" aria-live="polite"></div>
+
+  <script type="module">
+   // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-lib
+  
+    // GANTI nilai di bawah dengan konfigurasi aplikasi web dari Firebase Console.
+    const firebaseConfig = {
+      apiKey: "AIzaSyAMgVlEk1FafO4oI8AxMhpRoXdbLyPJSkQ",
+      authDomain: "gpid-express-728da.firebaseapp.com",
+      projectId: "gpid-express-728da",
+      storageBucket: "gpid-express-728da.firebasestorage.app",
+      messagingSenderId: "1041586148754",
+      appId: "1:1041586148754:web:630ce9b417db90e7fb9d4b",
+      measurementId: "G-C2HP994LBF"
+    };
+
+    const firebaseReady = Object.values(firebaseConfig).every(v => v && !String(v).startsWith('GANTI_'));
+    let auth = null;
+    let db = null;
+    let authUser = null;
+    let adminUser = null;
+    if (firebaseReady) {
+      try {
+        const app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+        onAuthStateChanged(auth, async user => {
+          authUser = user;
+          if (user && !user.isAnonymous) {
+            try {
+              const userSnap = await getDoc(doc(db, 'users', user.uid));
+              adminUser = userSnap.exists() && userSnap.data().role === 'admin' ? user : null;
+            } catch { adminUser = null; }
+          } else { adminUser = null; }
+        });
+      } catch (error) {
+        console.error('Firebase initialization error:', error);
+        showToast('Firebase gagal diinisialisasi. Periksa konfigurasi Firebase.', 'error');
+      }
+    }
+
+    const demoProducts = [
+      { id: 'demo-rice', name: 'Beras Premium 5 kg', price: 78000, category: 'bahan', sellerName: 'Toko Pangan Sejahtera', image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=700&q=80', description: 'Beras pilihan untuk kebutuhan rumah tangga.', stock: 25, active: true },
+      { id: 'demo-oil', name: 'Minyak Goreng 1 L', price: 19000, category: 'bahan', sellerName: 'Toko Pangan Sejahtera', image: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=700&q=80', description: 'Minyak goreng kemasan.', stock: 40, active: true },
+      { id: 'demo-beef', name: 'Daging Sapi 1 kg', price: 135000, category: 'daging', sellerName: 'Daging Segar Nusantara', image: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=700&q=80', description: 'Daging sapi segar. Contoh produk untuk pratinjau.', stock: 10, active: true },
+      { id: 'demo-chicken', name: 'Ayam Potong 1 kg', price: 38000, category: 'daging', sellerName: 'Daging Segar Nusantara', image: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=700&q=80', description: 'Ayam potong segar. Contoh produk untuk pratinjau.', stock: 18, active: true },
+      { id: 'demo-spinach', name: 'Bayam 1 Ikat', price: 6000, category: 'sayur', sellerName: 'Petani Lokal Ambon', image: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?auto=format&fit=crop&w=700&q=80', description: 'Sayuran hijau segar.', stock: 30, active: true },
+      { id: 'demo-carrot', name: 'Wortel 1 kg', price: 16000, category: 'sayur', sellerName: 'Petani Lokal Ambon', image: 'https://images.unsplash.com/photo-1445282768818-728615cc910a?auto=format&fit=crop&w=700&q=80', description: 'Wortel segar untuk kebutuhan dapur.', stock: 20, active: true },
+      { id: 'demo-banana', name: 'Pisang 1 Sisir', price: 25000, category: 'buah', sellerName: 'Petani Lokal Ambon', image: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?auto=format&fit=crop&w=700&q=80', description: 'Pisang matang pilihan.', stock: 15, active: true },
+      { id: 'demo-orange', name: 'Jeruk 1 kg', price: 28000, category: 'buah', sellerName: 'Petani Lokal Ambon', image: 'https://images.unsplash.com/photo-1547514701-42782101795e?auto=format&fit=crop&w=700&q=80', description: 'Jeruk segar. Contoh produk untuk pratinjau.', stock: 22, active: true }
+    ];
+    const demoSellers = [
+      { id: 'demo-seller-1', name: 'Toko Pangan Sejahtera', owner: 'Contoh Penjual', phone: '082200000001', address: 'Ambon', description: 'Contoh profil toko pangan untuk pratinjau.', status: 'approved' },
+      { id: 'demo-seller-2', name: 'Petani Lokal Ambon', owner: 'Contoh Petani', phone: '082200000002', address: 'Ambon', description: 'Contoh penjual sayur dan buah lokal.', status: 'approved' },
+      { id: 'demo-seller-3', name: 'Daging Segar Nusantara', owner: 'Contoh Penjual', phone: '082200000003', address: 'Ambon', description: 'Contoh toko produk daging.', status: 'approved' }
+    ];
+
+    let productsData = [];
+    let sellersData = [];
+    let currentCategory = 'all';
+    let currentSearch = '';
+    const modalRoot = document.getElementById('modal-root');
+
+    function localGet(key, fallback) {
+      try { const value = localStorage.getItem(key); return value ? JSON.parse(value) : fallback; }
+      catch { return fallback; }
+    }
+    function localSet(key, value) {
+      try { localStorage.setItem(key, JSON.stringify(value)); }
+      catch (error) { console.warn('Local storage unavailable', error); }
+    }
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+    }
+    function money(value) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(value) || 0); }
+    function showToast(message, type = '') {
+      const root = document.getElementById('toast-root');
+      root.innerHTML = `<div class="toast ${type}">${escapeHtml(message)}</div>`;
+      setTimeout(() => { root.innerHTML = ''; }, 3600);
+    }
+    function openModal(title, body, wide = false) {
+      modalRoot.innerHTML = `<div class="modal-backdrop" data-action="backdrop-close"><div class="modal-panel ${wide ? 'max-w-3xl' : ''}" role="dialog" aria-modal="true" aria-label="${escapeHtml(title)}"><div class="flex items-center justify-between gap-4 p-5 border-b"><h2 class="text-xl font-extrabold">${escapeHtml(title)}</h2><button class="text-slate-500 hover:text-slate-900 text-xl" data-action="close-modal" aria-label="Tutup"><i class="fas fa-times"></i></button></div><div class="p-5">${body}</div></div></div>`;
+    }
+    function closeModal() { modalRoot.innerHTML = ''; }
+    function navigate(sectionId) {
+      document.querySelectorAll('.section').forEach(section => section.classList.toggle('active', section.id === sectionId));
+      document.querySelectorAll('.nav-link').forEach(link => link.classList.toggle('active', link.dataset.section === sectionId));
+      document.getElementById('mobile-menu-dropdown').classList.add('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (sectionId === 'admin' && adminUser) renderAdmin('overview');
+    }
+
+    async function ensureGuestAuth() {
+      if (!firebaseReady || !auth) return null;
+      if (auth.currentUser) return auth.currentUser;
+      const credential = await signInAnonymously(auth);
+      return credential.user;
+    }
+
+    async function loadPublicData() {
+      try {
+        if (firebaseReady && db) {
+          const [productSnap, sellerSnap] = await Promise.all([
+            getDocs(collection(db, 'products')),
+            getDocs(query(collection(db, 'sellers'), where('status', '==', 'approved')))
+          ]);
+          productsData = productSnap.docs.map(item => ({ id: item.id, ...item.data() })).filter(item => item.active !== false);
+          sellersData = sellerSnap.docs.map(item => ({ id: item.id, ...item.data() }));
+        } else {
+          productsData = demoProducts;
+          sellersData = demoSellers;
+        }
+      } catch (error) {
+        console.error(error);
+        showToast('Data gagal dimuat. Periksa koneksi atau Security Rules Firebase.', 'error');
+        productsData = [];
+        sellersData = [];
+      }
+      renderProducts();
+      renderSellers();
+      updateStats();
+    }
+
+    function updateStats() {
+      document.getElementById('stat-products').textContent = productsData.length.toLocaleString('id-ID');
+      document.getElementById('stat-sellers').textContent = sellersData.length.toLocaleString('id-ID');
+      document.getElementById('seller-stat-active').textContent = sellersData.length.toLocaleString('id-ID');
+    }
+    function categoryName(category) {
+      return ({ bahan: 'Makanan Pokok', daging: 'Daging', sayur: 'Sayur-sayuran', buah: 'Buah-buahan' })[category] || 'Produk Pangan';
+    }
+    function renderProducts() {
+      const grid = document.getElementById('products-grid');
+      const empty = document.getElementById('products-empty');
+      const filtered = productsData.filter(product => {
+        const categoryMatch = currentCategory === 'all' || product.category === currentCategory;
+        const searchText = `${product.name || ''} ${product.sellerName || ''} ${product.description || ''}`.toLowerCase();
+        return categoryMatch && searchText.includes(currentSearch);
+      });
+      empty.classList.toggle('hidden', filtered.length > 0);
+      grid.innerHTML = filtered.map(product => `
+        <article class="product-card card-hover">
+          <div class="relative"><img src="${escapeHtml(product.image || 'https://placehold.co/600x400?text=Produk+Pangan')}" alt="${escapeHtml(product.name)}" class="w-full h-48 object-cover" onerror="this.src='https://placehold.co/600x400?text=Produk+Pangan'" /><span class="absolute top-3 left-3 bg-white/95 rounded-full px-3 py-1 text-xs font-bold text-slate-700">${escapeHtml(categoryName(product.category))}</span></div>
+          <div class="p-4"><h3 class="font-bold text-lg mb-1">${escapeHtml(product.name)}</h3><p class="text-sm text-slate-500 mb-3">Penjual: ${escapeHtml(product.sellerName || 'Penjual GPID-EXPRESS')}</p><p class="text-2xl font-extrabold text-blue-700 mb-4">${money(product.price)}</p><div class="flex items-center justify-between gap-3"><span class="text-xs text-slate-500">Stok: ${Number(product.stock ?? 0)}</span><button class="btn-primary text-sm" data-action="add-cart" data-id="${escapeHtml(product.id)}" ${Number(product.stock ?? 0) <= 0 ? 'disabled' : ''}>Tambah ke Keranjang</button></div></div>
+        </article>`).join('');
+    }
+    function renderSellers() {
+      const grid = document.getElementById('sellers-grid');
+      const empty = document.getElementById('sellers-empty');
+      empty.classList.toggle('hidden', sellersData.length > 0);
+      grid.innerHTML = sellersData.map(seller => `
+        <article class="bg-white p-6 rounded-2xl shadow-sm card-hover"><div class="flex items-center gap-4 mb-4"><div class="w-14 h-14 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xl"><i class="fas fa-store"></i></div><div class="min-w-0"><h3 class="font-bold text-lg truncate">${escapeHtml(seller.name)}</h3><span class="seller-badge">Terverifikasi</span></div></div><p class="text-sm text-slate-600 mb-2">${escapeHtml(seller.description || 'Penjual terdaftar di GPID-EXPRESS.')}</p><p class="text-sm text-slate-500 mb-4"><i class="fas fa-location-dot mr-2"></i>${escapeHtml(seller.address || 'Alamat belum dicantumkan')}</p><button class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-2 font-semibold" data-action="view-seller" data-id="${escapeHtml(seller.id)}">Lihat Toko</button></article>`).join('');
+    }
+
+    function getCart() { return localGet('gpid_cart', []); }
+    function saveCart(cart) { localSet('gpid_cart', cart); updateCartBadge(); }
+    function updateCartBadge() {
+      const count = getCart().reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+      document.getElementById('cart-count').textContent = count;
+    }
+    function addToCart(productId) {
+      const product = productsData.find(item => item.id === productId);
+      if (!product) return showToast('Produk tidak ditemukan.', 'error');
+      const cart = getCart();
+      const existing = cart.find(item => item.id === productId);
+      const stock = Number(product.stock ?? 0);
+      if (existing && existing.quantity >= stock) return showToast('Jumlah di keranjang sudah mencapai stok yang tersedia.', 'error');
+      if (!existing && stock <= 0) return showToast('Stok produk sedang habis.', 'error');
+      if (existing) existing.quantity += 1;
+      else cart.push({ id: product.id, name: product.name, price: Number(product.price) || 0, image: product.image || '', sellerName: product.sellerName || '', quantity: 1 });
+      saveCart(cart);
+      showToast(`${product.name} ditambahkan ke keranjang.`, 'success');
+    }
+    function renderCart() {
+      const cart = getCart();
+      if (!cart.length) {
+        openModal('Keranjang Belanja', '<div class="text-center py-8"><i class="fas fa-cart-shopping text-4xl text-slate-300 mb-4"></i><p class="text-slate-500">Keranjang Anda masih kosong.</p><button class="btn-primary mt-5" data-action="close-and-products">Cari Produk</button></div>');
+        return;
+      }
+      const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const rows = cart.map(item => `<div class="flex gap-3 py-4 border-b"><img src="${escapeHtml(item.image || 'https://placehold.co/100x100')}" alt="" class="w-16 h-16 rounded-lg object-cover"/><div class="flex-1 min-w-0"><h3 class="font-bold">${escapeHtml(item.name)}</h3><p class="text-sm text-blue-700 font-semibold">${money(item.price)}</p><div class="flex items-center gap-2 mt-2"><button class="w-7 h-7 rounded bg-slate-100" data-action="cart-dec" data-id="${escapeHtml(item.id)}">−</button><span class="text-sm font-bold">${item.quantity}</span><button class="w-7 h-7 rounded bg-slate-100" data-action="cart-inc" data-id="${escapeHtml(item.id)}">+</button><button class="text-xs text-red-600 ml-2" data-action="cart-remove" data-id="${escapeHtml(item.id)}">Hapus</button></div></div><div class="font-bold text-sm">${money(item.price * item.quantity)}</div></div>`).join('');
+      openModal('Keranjang Belanja', `<div>${rows}</div><div class="flex justify-between items-center py-5 text-lg"><span class="font-bold">Total</span><strong class="text-blue-700">${money(total)}</strong></div><button class="btn-primary w-full" data-action="checkout">Lanjut ke Checkout</button>`);
+    }
+    function updateCartItem(id, action) {
+      let cart = getCart();
+      const item = cart.find(row => row.id === id);
+      if (!item) return;
+      if (action === 'inc') item.quantity += 1;
+      if (action === 'dec') item.quantity -= 1;
+      if (action === 'remove' || item.quantity <= 0) cart = cart.filter(row => row.id !== id);
+      saveCart(cart);
+      renderCart();
+    }
+    function renderCheckout() {
+      const cart = getCart();
+      const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      openModal('Checkout Pesanan', `<form id="checkout-form" class="space-y-4"><p class="text-sm text-slate-600">Total pesanan: <strong class="text-blue-700">${money(total)}</strong></p><div><label class="block font-semibold mb-1" for="checkout-name">Nama penerima</label><input class="form-control" id="checkout-name" name="name" required maxlength="100" /></div><div><label class="block font-semibold mb-1" for="checkout-phone">Nomor telepon/WhatsApp</label><input class="form-control" id="checkout-phone" name="phone" required maxlength="30" /></div><div><label class="block font-semibold mb-1" for="checkout-address">Alamat pengiriman</label><textarea class="form-control" id="checkout-address" name="address" rows="3" required maxlength="500"></textarea></div><div><label class="block font-semibold mb-1" for="checkout-note">Catatan (opsional)</label><textarea class="form-control" id="checkout-note" name="note" rows="2" maxlength="500"></textarea></div><button class="btn-primary w-full" type="submit">Buat Pesanan</button></form>`);
+    }
+    async function submitOrder(form) {
+      const cart = getCart();
+      if (!cart.length) return showToast('Keranjang masih kosong.', 'error');
+      const formData = new FormData(form);
+      const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const orderCode = `GP${Date.now().toString().slice(-9)}`;
+      const order = {
+        orderCode,
+        customerName: String(formData.get('name')).trim(),
+        customerPhone: String(formData.get('phone')).trim(),
+        address: String(formData.get('address')).trim(),
+        note: String(formData.get('note') || '').trim(),
+        items: cart.map(item => ({ productId: item.id, name: item.name, price: item.price, quantity: item.quantity, subtotal: item.price * item.quantity, sellerName: item.sellerName })),
+        total,
+        status: 'baru'
+      };
+      try {
+        if (firebaseReady && db) {
+          const user = await ensureGuestAuth();
+          await addDoc(collection(db, 'orders'), { ...order, customerUid: user.uid, createdAt: serverTimestamp() });
+        } else {
+          const orders = localGet('gpid_demo_orders', []);
+          orders.unshift({ ...order, customerUid: 'demo-browser', createdAt: new Date().toISOString() });
+          localSet('gpid_demo_orders', orders);
+        }
+        saveCart([]);
+        openModal('Pesanan Berhasil Dibuat', `<div class="text-center py-5"><div class="w-16 h-16 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-3xl mx-auto mb-4"><i class="fas fa-check"></i></div><h3 class="text-xl font-extrabold mb-2">Terima kasih telah memesan!</h3><p class="text-slate-600">Nomor pesanan Anda:</p><p class="text-2xl font-extrabold text-blue-700 my-3">${escapeHtml(orderCode)}</p><p class="text-sm text-slate-500">Simpan nomor ini untuk referensi. Admin akan memproses pesanan Anda.</p><button class="btn-primary mt-5" data-action="close-modal">Selesai</button></div>`);
+        showToast('Pesanan berhasil disimpan.', 'success');
+      } catch (error) {
+        console.error(error);
+        showToast(`Pesanan gagal disimpan: ${error.message || 'Periksa Firebase.'}`, 'error');
+      }
+    }
+
+    function openSellerForm() {
+      openModal('Pendaftaran Penjual', `<form id="seller-form" class="space-y-4"><div><label class="block font-semibold mb-1" for="seller-name">Nama toko/usaha</label><input id="seller-name" name="name" class="form-control" required maxlength="120" /></div><div><label class="block font-semibold mb-1" for="seller-owner">Nama pemilik</label><input id="seller-owner" name="owner" class="form-control" required maxlength="100" /></div><div><label class="block font-semibold mb-1" for="seller-phone">Nomor telepon/WhatsApp</label><input id="seller-phone" name="phone" class="form-control" required maxlength="30" /></div><div><label class="block font-semibold mb-1" for="seller-address">Alamat usaha</label><textarea id="seller-address" name="address" class="form-control" rows="2" required maxlength="300"></textarea></div><div><label class="block font-semibold mb-1" for="seller-description">Deskripsi usaha</label><textarea id="seller-description" name="description" class="form-control" rows="3" maxlength="600"></textarea></div><p class="text-xs text-slate-500">Pendaftaran akan berstatus menunggu sampai diperiksa admin.</p><button class="btn-primary w-full" type="submit">Kirim Pendaftaran</button></form>`);
+    }
+    async function submitSeller(form) {
+      const data = Object.fromEntries(new FormData(form).entries());
+      const seller = { name: String(data.name).trim(), owner: String(data.owner).trim(), phone: String(data.phone).trim(), address: String(data.address).trim(), description: String(data.description || '').trim(), status: 'pending' };
+      try {
+        if (firebaseReady && db) await addDoc(collection(db, 'sellers'), { ...seller, createdAt: serverTimestamp() });
+        else { const list = localGet('gpid_demo_seller_requests', []); list.unshift({ ...seller, id: `local-${Date.now()}` }); localSet('gpid_demo_seller_requests', list); }
+        closeModal();
+        showToast('Pendaftaran berhasil dikirim dan menunggu persetujuan admin.', 'success');
+      } catch (error) { console.error(error); showToast(`Pendaftaran gagal: ${error.message || 'Periksa Firebase.'}`, 'error'); }
+    }
+    function viewSeller(id) {
+      const seller = sellersData.find(item => item.id === id);
+      if (!seller) return showToast('Toko tidak ditemukan.', 'error');
+      const items = productsData.filter(item => item.sellerName === seller.name);
+      const productList = items.length ? items.map(item => `<li class="flex justify-between gap-3 py-2 border-b"><span>${escapeHtml(item.name)}</span><strong>${money(item.price)}</strong></li>`).join('') : '<li class="text-slate-500 py-2">Belum ada produk dari toko ini.</li>';
+      openModal('Profil Toko', `<div class="flex items-center gap-4 mb-5"><div class="w-14 h-14 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-2xl"><i class="fas fa-store"></i></div><div><h3 class="text-xl font-extrabold">${escapeHtml(seller.name)}</h3><span class="seller-badge">Terverifikasi</span></div></div><p class="text-slate-600 mb-2">${escapeHtml(seller.description || '')}</p><p class="text-sm text-slate-500 mb-5"><i class="fas fa-location-dot mr-2"></i>${escapeHtml(seller.address || '')}</p><h4 class="font-bold mb-2">Produk dari toko ini</h4><ul>${productList}</ul><a class="inline-block mt-5 text-blue-700 font-semibold" href="tel:${escapeHtml(seller.phone || '')}"><i class="fas fa-phone mr-2"></i>Hubungi penjual</a>`);
+    }
+
+    async function submitContact(form) {
+      const data = Object.fromEntries(new FormData(form).entries());
+      const message = { name: String(data.name).trim(), email: String(data.email).trim(), phone: String(data.phone || '').trim(), subject: String(data.subject || 'Pertanyaan Umum'), message: String(data.message).trim(), handled: false };
+      try {
+        if (firebaseReady && db) await addDoc(collection(db, 'messages'), { ...message, createdAt: serverTimestamp() });
+        else { const list = localGet('gpid_demo_messages', []); list.unshift({ ...message, createdAt: new Date().toISOString() }); localSet('gpid_demo_messages', list); }
+        form.reset();
+        showToast('Pesan berhasil dikirim. Terima kasih telah menghubungi kami.', 'success');
+      } catch (error) { console.error(error); showToast(`Pesan gagal dikirim: ${error.message || 'Periksa Firebase.'}`, 'error'); }
+    }
+
+    function openAdminLogin() {
+      if (adminUser) { navigate('admin'); renderAdmin('overview'); return; }
+      if (!firebaseReady || !auth || !db) {
+        openModal('Konfigurasi Firebase Diperlukan', '<div class="space-y-3 text-slate-600"><p>Dashboard admin memerlukan Firebase Authentication dan Cloud Firestore.</p><p>Lengkapi konfigurasi Firebase di bagian <code>firebaseConfig</code> pada file <strong>index.html</strong>, aktifkan metode login Email/Password, lalu buat akun admin.</p><p class="text-sm">Petunjuk lengkap tersedia pada file <strong>FIREBASE_SETUP.md</strong>.</p></div>');
+        return;
+      }
+      openModal('Login Admin', `<form id="admin-login-form" class="space-y-4"><div><label class="block font-semibold mb-1" for="admin-email-input">Email admin</label><input id="admin-email-input" name="email" type="email" class="form-control" autocomplete="username" required /></div><div><label class="block font-semibold mb-1" for="admin-password-input">Password</label><input id="admin-password-input" name="password" type="password" class="form-control" autocomplete="current-password" required /></div><button class="btn-primary w-full" type="submit">Masuk ke Dashboard</button><p class="text-xs text-slate-500">Hanya akun yang UID-nya telah diberi role admin di Firestore yang dapat membuka dashboard.</p></form>`);
+    }
+    async function submitAdminLogin(form) {
+      const data = new FormData(form);
+      try {
+        const credential = await signInWithEmailAndPassword(auth, String(data.get('email')).trim(), String(data.get('password')));
+        const userDoc = await getDoc(doc(db, 'users', credential.user.uid));
+        if (!userDoc.exists() || userDoc.data().role !== 'admin') {
+          await signOut(auth);
+          adminUser = null;
+          throw new Error('Akun berhasil login, tetapi belum memiliki role admin. Tambahkan dokumen users/{UID} dengan field role: admin.');
+        }
+        adminUser = credential.user;
+        closeModal();
+        document.getElementById('admin-email').textContent = credential.user.email || '';
+        navigate('admin');
+        await renderAdmin('overview');
+        showToast('Login admin berhasil.', 'success');
+      } catch (error) { console.error(error); showToast(error.message || 'Login gagal.', 'error'); }
+    }
+
+    async function getAdminCollections() {
+      const [p, o, s, m] = await Promise.all([
+        getDocs(collection(db, 'products')),
+        getDocs(collection(db, 'orders')),
+        getDocs(collection(db, 'sellers')),
+        getDocs(collection(db, 'messages'))
+      ]);
+      const unpack = snap => snap.docs.map(item => ({ id: item.id, ...item.data() }));
+      return { products: unpack(p), orders: unpack(o).sort((a,b) => dateValue(b.createdAt) - dateValue(a.createdAt)), sellers: unpack(s), messages: unpack(m).sort((a,b) => dateValue(b.createdAt) - dateValue(a.createdAt)) };
+    }
+    function dateValue(value) {
+      if (!value) return 0;
+      if (typeof value.toDate === 'function') return value.toDate().getTime();
+      const parsed = new Date(value).getTime(); return Number.isNaN(parsed) ? 0 : parsed;
+    }
+    function dateLabel(value) {
+      if (!value) return '-';
+      const date = typeof value.toDate === 'function' ? value.toDate() : new Date(value);
+      return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString('id-ID');
+    }
+    async function renderAdmin(tab = 'overview') {
+      if (!adminUser || !db) return;
+      const panel = document.getElementById('admin-panel');
+      panel.innerHTML = '<p class="text-slate-500 py-8 text-center"><i class="fas fa-spinner fa-spin mr-2"></i>Memuat data dashboard...</p>';
+      try {
+        const data = await getAdminCollections();
+        const nav = `<div class="flex flex-wrap gap-2 mb-7">${[['overview','Ringkasan'],['products','Produk'],['orders','Pesanan'],['sellers','Pendaftaran Penjual'],['messages','Pesan Masuk']].map(([key,label]) => `<button class="px-4 py-2 rounded-lg text-sm font-bold ${tab === key ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700'}" data-action="admin-tab" data-tab="${key}">${label}</button>`).join('')}</div>`;
+        let content = '';
+        if (tab === 'overview') {
+          const pending = data.sellers.filter(x => x.status === 'pending').length;
+          const newOrders = data.orders.filter(x => x.status === 'baru').length;
+          content = `<div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-7"><div class="p-5 rounded-xl bg-blue-50"><p class="text-sm text-slate-600">Produk</p><p class="text-3xl font-extrabold text-blue-700">${data.products.length}</p></div><div class="p-5 rounded-xl bg-green-50"><p class="text-sm text-slate-600">Pesanan</p><p class="text-3xl font-extrabold text-green-700">${data.orders.length}</p></div><div class="p-5 rounded-xl bg-amber-50"><p class="text-sm text-slate-600">Pendaftaran menunggu</p><p class="text-3xl font-extrabold text-amber-700">${pending}</p></div><div class="p-5 rounded-xl bg-purple-50"><p class="text-sm text-slate-600">Pesanan baru</p><p class="text-3xl font-extrabold text-purple-700">${newOrders}</p></div></div><h3 class="font-extrabold text-lg mb-3">Aktivitas terbaru</h3><p class="text-sm text-slate-600">Gunakan menu di atas untuk mengelola katalog produk, memproses pesanan, meninjau pendaftaran penjual, dan membaca pesan pelanggan.</p>`;
+        } else if (tab === 'products') {
+          content = `<div class="flex flex-wrap justify-between items-center gap-3 mb-4"><h3 class="font-extrabold text-lg">Daftar Produk (${data.products.length})</h3><button class="btn-primary" data-action="product-add"><i class="fas fa-plus mr-2"></i>Tambah Produk</button></div><div class="table-wrap"><table class="admin-table"><thead><tr><th>Produk</th><th>Kategori</th><th>Harga</th><th>Stok</th><th>Aksi</th></tr></thead><tbody>${data.products.map(p => `<tr><td><div class="font-bold">${escapeHtml(p.name)}</div><div class="text-xs text-slate-500">${escapeHtml(p.sellerName || '')}</div></td><td>${escapeHtml(categoryName(p.category))}</td><td>${money(p.price)}</td><td>${Number(p.stock || 0)}</td><td><div class="flex gap-2"><button class="text-blue-700 font-bold" data-action="product-edit" data-id="${escapeHtml(p.id)}">Edit</button><button class="text-red-600 font-bold" data-action="product-delete" data-id="${escapeHtml(p.id)}">Hapus</button></div></td></tr>`).join('') || '<tr><td colspan="5" class="text-center text-slate-500">Belum ada produk.</td></tr>'}</tbody></table></div>`;
+        } else if (tab === 'orders') {
+          content = `<h3 class="font-extrabold text-lg mb-4">Daftar Pesanan (${data.orders.length})</h3><div class="space-y-4">${data.orders.map(order => `<article class="border rounded-xl p-4"><div class="flex flex-wrap justify-between gap-2 mb-2"><div><strong>${escapeHtml(order.orderCode || order.id)}</strong><p class="text-sm text-slate-500">${escapeHtml(order.customerName || '')} · ${escapeHtml(order.customerPhone || '')}</p></div><strong class="text-blue-700">${money(order.total)}</strong></div><p class="text-xs text-slate-500 mb-3">${dateLabel(order.createdAt)} · ${escapeHtml(order.address || '')}</p><p class="text-sm mb-3">${(order.items || []).map(i => `${escapeHtml(i.name)} × ${Number(i.quantity || 0)}`).join(', ')}</p><div class="flex flex-wrap items-center gap-2"><label class="text-sm font-semibold" for="status-${escapeHtml(order.id)}">Status:</label><select id="status-${escapeHtml(order.id)}" class="form-control max-w-xs">${['baru','diproses','dikirim','selesai','dibatalkan'].map(s => `<option value="${s}" ${order.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select><button class="btn-primary text-sm" data-action="order-status-save" data-id="${escapeHtml(order.id)}">Simpan Status</button></div></article>`).join('') || '<p class="text-slate-500">Belum ada pesanan.</p>'}</div>`;
+        } else if (tab === 'sellers') {
+          content = `<h3 class="font-extrabold text-lg mb-4">Pendaftaran Penjual (${data.sellers.length})</h3><div class="space-y-4">${data.sellers.map(s => `<article class="border rounded-xl p-4"><div class="flex flex-wrap justify-between gap-2"><div><h4 class="font-bold">${escapeHtml(s.name)}</h4><p class="text-sm text-slate-500">Pemilik: ${escapeHtml(s.owner || '-')} · ${escapeHtml(s.phone || '-')}</p><p class="text-sm text-slate-500">${escapeHtml(s.address || '')}</p></div><span class="status-pill status-${escapeHtml(s.status)}">${escapeHtml(s.status)}</span></div><p class="text-sm my-3">${escapeHtml(s.description || '')}</p><div class="flex flex-wrap gap-2"><button class="px-3 py-2 rounded-lg bg-green-100 text-green-800 text-sm font-bold" data-action="seller-status" data-id="${escapeHtml(s.id)}" data-status="approved">Setujui</button><button class="px-3 py-2 rounded-lg bg-red-100 text-red-800 text-sm font-bold" data-action="seller-status" data-id="${escapeHtml(s.id)}" data-status="rejected">Tolak</button><button class="px-3 py-2 rounded-lg bg-slate-100 text-slate-700 text-sm font-bold" data-action="seller-status" data-id="${escapeHtml(s.id)}" data-status="pending">Tunda</button></div></article>`).join('') || '<p class="text-slate-500">Belum ada pendaftaran penjual.</p>'}</div>`;
+        } else if (tab === 'messages') {
+          content = `<h3 class="font-extrabold text-lg mb-4">Pesan Masuk (${data.messages.length})</h3><div class="space-y-4">${data.messages.map(m => `<article class="border rounded-xl p-4"><div class="flex flex-wrap justify-between gap-2"><div><h4 class="font-bold">${escapeHtml(m.subject || 'Pesan')}</h4><p class="text-sm text-slate-500">${escapeHtml(m.name)} · ${escapeHtml(m.email)} · ${escapeHtml(m.phone || '-')}</p></div><span class="status-pill ${m.handled ? 'status-approved' : 'status-pending'}">${m.handled ? 'Ditangani' : 'Belum ditangani'}</span></div><p class="text-sm my-3 whitespace-pre-wrap">${escapeHtml(m.message)}</p><p class="text-xs text-slate-400 mb-3">${dateLabel(m.createdAt)}</p>${m.handled ? '' : `<button class="btn-primary text-sm" data-action="message-handle" data-id="${escapeHtml(m.id)}">Tandai Ditangani</button>`}</article>`).join('') || '<p class="text-slate-500">Belum ada pesan masuk.</p>'}</div>`;
+        }
+        panel.innerHTML = nav + content;
+      } catch (error) {
+        console.error(error);
+        panel.innerHTML = `<div class="bg-red-50 text-red-800 rounded-xl p-5"><strong>Data dashboard tidak dapat dimuat.</strong><p class="text-sm mt-1">${escapeHtml(error.message || 'Periksa Security Rules Firestore.')}</p></div>`;
+      }
+    }
+
+    function openProductForm(product = null) {
+      const p = product || { name: '', category: 'bahan', price: '', stock: '', sellerName: '', image: '', description: '', active: true };
+      openModal(product ? 'Edit Produk' : 'Tambah Produk', `<form id="product-form" class="space-y-3"><input type="hidden" name="id" value="${escapeHtml(product?.id || '')}"/><div><label class="block font-semibold mb-1">Nama Produk</label><input class="form-control" name="name" required maxlength="120" value="${escapeHtml(p.name)}"/></div><div class="grid sm:grid-cols-2 gap-3"><div><label class="block font-semibold mb-1">Kategori</label><select class="form-control" name="category"><option value="bahan" ${p.category === 'bahan' ? 'selected' : ''}>Makanan Pokok</option><option value="daging" ${p.category === 'daging' ? 'selected' : ''}>Daging</option><option value="sayur" ${p.category === 'sayur' ? 'selected' : ''}>Sayur-sayuran</option><option value="buah" ${p.category === 'buah' ? 'selected' : ''}>Buah-buahan</option></select></div><div><label class="block font-semibold mb-1">Harga (Rp)</label><input class="form-control" name="price" type="number" min="0" required value="${escapeHtml(p.price)}"/></div><div><label class="block font-semibold mb-1">Stok</label><input class="form-control" name="stock" type="number" min="0" required value="${escapeHtml(p.stock)}"/></div><div><label class="block font-semibold mb-1">Nama Penjual</label><input class="form-control" name="sellerName" required maxlength="120" value="${escapeHtml(p.sellerName)}"/></div></div><div><label class="block font-semibold mb-1">URL Gambar Produk</label><input class="form-control" name="image" type="url" placeholder="https://..." value="${escapeHtml(p.image)}"/></div><div><label class="block font-semibold mb-1">Deskripsi</label><textarea class="form-control" name="description" rows="3" maxlength="600">${escapeHtml(p.description)}</textarea></div><label class="flex items-center gap-2"><input type="checkbox" name="active" ${p.active !== false ? 'checked' : ''}/> Produk aktif dan tampil di katalog</label><button class="btn-primary w-full" type="submit">Simpan Produk</button></form>`);
+    }
+
+    async function handleAction(actionElement, clickEvent) {
+      const action = actionElement.dataset.action;
+      const id = actionElement.dataset.id;
+      if (action === 'navigate') navigate(actionElement.dataset.section);
+      else if (action === 'toggle-mobile') document.getElementById('mobile-menu-dropdown').classList.toggle('hidden');
+      else if (action === 'open-cart') renderCart();
+      else if (action === 'close-modal') closeModal();
+      else if (action === 'close-and-products') { closeModal(); navigate('products'); }
+      else if (action === 'backdrop-close' && actionElement === clickEvent.target) closeModal();
+      else if (action === 'add-cart') addToCart(id);
+      else if (action === 'cart-inc') updateCartItem(id, 'inc');
+      else if (action === 'cart-dec') updateCartItem(id, 'dec');
+      else if (action === 'cart-remove') updateCartItem(id, 'remove');
+      else if (action === 'checkout') renderCheckout();
+      else if (action === 'open-seller-form') openSellerForm();
+      else if (action === 'view-seller') viewSeller(id);
+      else if (action === 'open-admin') openAdminLogin();
+      else if (action === 'admin-refresh') renderAdmin(document.querySelector('[data-action="admin-tab"].bg-blue-600')?.dataset.tab || 'overview');
+      else if (action === 'admin-tab') renderAdmin(actionElement.dataset.tab);
+      else if (action === 'admin-logout') { await signOut(auth); adminUser = null; navigate('home'); showToast('Anda telah keluar dari dashboard admin.'); }
+      else if (action === 'product-add') openProductForm();
+      else if (action === 'product-edit') { const snap = await getDoc(doc(db, 'products', id)); if (snap.exists()) openProductForm({ id, ...snap.data() }); }
+      else if (action === 'product-delete') { if (confirm('Hapus produk ini?')) { await deleteDoc(doc(db, 'products', id)); showToast('Produk berhasil dihapus.', 'success'); await loadPublicData(); await renderAdmin('products'); } }
+      else if (action === 'seller-status') { await updateDoc(doc(db, 'sellers', id), { status: actionElement.dataset.status, reviewedAt: serverTimestamp() }); showToast('Status pendaftaran diperbarui.', 'success'); await loadPublicData(); await renderAdmin('sellers'); }
+      else if (action === 'order-status-save') { const status = document.getElementById(`status-${id}`).value; await updateDoc(doc(db, 'orders', id), { status, updatedAt: serverTimestamp() }); showToast('Status pesanan diperbarui.', 'success'); await renderAdmin('orders'); }
+      else if (action === 'message-handle') { await updateDoc(doc(db, 'messages', id), { handled: true, handledAt: serverTimestamp() }); showToast('Pesan ditandai sudah ditangani.', 'success'); await renderAdmin('messages'); }
+      else if (action === 'open-info') {
+        const content = actionElement.dataset.info === 'privacy'
+          ? '<p>Data yang dikirim melalui formulir, pendaftaran penjual, dan checkout disimpan untuk keperluan pengelolaan layanan GPID-EXPRESS. Batasi pengumpulan data pada informasi yang memang diperlukan dan lindungi akses dashboard admin.</p>'
+          : '<p>Informasi produk, harga, stok, dan ketersediaan dapat diperbarui oleh admin. Pesanan dianggap tercatat setelah sistem menampilkan nomor pesanan. Pengiriman dan pembayaran perlu dikonfirmasi lebih lanjut oleh pengelola GPID-EXPRESS.</p>';
+        openModal(actionElement.dataset.info === 'privacy' ? 'Kebijakan Privasi' : 'Syarat dan Ketentuan', `<div class="text-slate-600 leading-relaxed">${content}</div>`);
+      }
+      else if (action === 'social-info') showToast('Tautan media sosial belum diatur oleh pengelola.');
+    }
+
+    document.addEventListener('click', async event => {
+      const actionElement = event.target.closest('[data-action]');
+      if (!actionElement) return;
+      try { await handleAction(actionElement, event); }
+      catch (error) { console.error(error); showToast(error.message || 'Aksi tidak dapat diproses.', 'error'); }
+    });
+
+    document.addEventListener('submit', async event => {
+      const form = event.target;
+      if (!form.id) return;
+      event.preventDefault();
+      try {
+        if (form.id === 'contact-form') await submitContact(form);
+        else if (form.id === 'seller-form') await submitSeller(form);
+        else if (form.id === 'checkout-form') await submitOrder(form);
+        else if (form.id === 'admin-login-form') await submitAdminLogin(form);
+        else if (form.id === 'product-form') {
+          if (!adminUser || !db) throw new Error('Akses admin diperlukan.');
+          const data = new FormData(form);
+          const product = { name: String(data.get('name')).trim(), category: String(data.get('category')), price: Number(data.get('price')), stock: Number(data.get('stock')), sellerName: String(data.get('sellerName')).trim(), image: String(data.get('image') || '').trim(), description: String(data.get('description') || '').trim(), active: form.elements.active.checked, updatedAt: serverTimestamp() };
+          const productId = String(data.get('id') || '');
+          if (productId) await updateDoc(doc(db, 'products', productId), product);
+          else await addDoc(collection(db, 'products'), { ...product, createdAt: serverTimestamp() });
+          closeModal(); showToast('Produk berhasil disimpan.', 'success'); await loadPublicData(); await renderAdmin('products');
+        }
+      } catch (error) { console.error(error); showToast(error.message || 'Formulir gagal dikirim.', 'error'); }
+    });
+
+    document.querySelectorAll('.filter-btn').forEach(button => button.addEventListener('click', () => {
+      currentCategory = button.dataset.category;
+      document.querySelectorAll('.filter-btn').forEach(item => { item.classList.remove('bg-blue-600','text-white'); item.classList.add('bg-slate-200','text-slate-700'); });
+      button.classList.add('bg-blue-600','text-white'); button.classList.remove('bg-slate-200','text-slate-700'); renderProducts();
+    }));
+    document.getElementById('product-search').addEventListener('input', event => { currentSearch = event.target.value.trim().toLowerCase(); renderProducts(); });
+
+    document.getElementById('mode-notice').classList.toggle('hidden', firebaseReady);
+    document.getElementById('current-year').textContent = new Date().getFullYear();
+    await loadPublicData();
+    updateCartBadge();
+  </script>
+</body>
+</html>
